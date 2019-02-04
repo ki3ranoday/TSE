@@ -1,6 +1,6 @@
 # CS50 Tiny Search Engine
 
-My Name - Winter 2019
+Kieran O'Day - Winter 2019
 
 To build, run `make`.
 
