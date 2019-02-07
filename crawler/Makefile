@@ -20,4 +20,7 @@ crawler.o:
 
 # clean up after our compilation
 clean:
-	rm -f $(LIB) *~ *.o
+	rm -f pages/*
+	rm crawler
+	rm *.o
+
