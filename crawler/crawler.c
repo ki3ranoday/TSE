@@ -14,6 +14,7 @@
 #include "webpage.h"
 
 #define HASHTABLESIZE 100
+#define VEBOSE //comment this line if you don't want to see all the errors for URLs and webpages
 
 /* helper function initialization; see function definition for comments */
 void crawl(webpage_t* seed, int maxDepth, char* dirname);
@@ -149,16 +150,20 @@ int checkInput(int argc, char* argv[], webpage_t** seed){
 */
 webpage_t* makeWebpage(char* URL, int depth, hashtable_t* ht){
 	if(URL == NULL){ //check null
-		fprintf(stderr, "Null URL\n");
+		//fprintf(stderr, "Null URL\n");
 		return NULL;
 	}
 	//make sure URL is good
 	if(!NormalizeURL(URL)){ //check normilizable
-		fprintf(stderr, "%s is not normalizable\n", URL);
+		#ifdef VERBOSE
+			fprintf(stderr, "%s is not normalizable\n", URL);
+		#endif
 		return NULL;
 	}
 	if(!IsInternalURL(URL)){ //check internal
-		fprintf(stderr, "%s is not internal\n", URL);
+		#ifdef VERBOSE
+			fprintf(stderr, "%s is not internal\n", URL);
+		#endif
 		return NULL;
 	}
 	if(ht != NULL){ //if the ht parameter is a hashtable
@@ -169,11 +174,15 @@ webpage_t* makeWebpage(char* URL, int depth, hashtable_t* ht){
 	}
 	webpage_t* page = webpage_new(URL, depth, NULL);
 	if(page == NULL){ //try to make the seed page
-		fprintf(stderr, "Failed to make webpage %s\n", URL);
+		#ifdef VERBOSE
+			fprintf(stderr, "Failed to make webpage %s\n", URL);
+		#endif
 		return NULL;
 	}
 	if(!webpage_fetch(page)){ //try to fetch the seed page html
-		fprintf(stderr, "Failed to fetch html from %s\n", URL);
+		#ifdef VERBOSE
+			fprintf(stderr, "Failed to fetch html from %s\n", URL);
+		#endif
 		webpage_delete(page);
 		return NULL;
 	}

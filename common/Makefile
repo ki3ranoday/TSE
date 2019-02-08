@@ -22,4 +22,5 @@ pagedir.o: pagedir.h
 
 # clean up after our compilation
 clean:
-	rm -f $(LIB) *~ *.o
+	rm $(LIB).a
+	rm *.o
