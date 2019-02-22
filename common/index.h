@@ -46,4 +46,4 @@ void index_save(index_t* index, FILE* fp);
 loads an index by parsing the file created by index_save
 returns the loaded index
 */
-index_t* index_load(FILE* fp);
+index_t* index_load(FILE* fp, int size);

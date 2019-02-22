@@ -18,7 +18,7 @@ $(LIB): $(OBJS)
 # Dependencies: object files depend on header files
 pagedir.o: pagedir.h readlinep.h
 readlinep.o: readlinep.h
-index.o: index.h
+index.o: index.h readlinep.h
 word.o: word.h
 
 .PHONY: clean 

@@ -3,7 +3,8 @@
 #include <string.h>
 #include <stdlib.h>
 #include "hashtable.h"
-#include "counters.h" 
+#include "counters.h"
+#include "readlinep.h"
 
 
 
@@ -33,7 +34,6 @@ bool index_insert(index_t* index, char* word, int docID){
 	}
 	return false;
 }
-
 
 /*
 return the count of the word in the document
@@ -106,9 +106,9 @@ loads an index by parsing the file created by index_save
 returns the loaded index
 */
 index_t* index_load(FILE* fp, int size){
-	char curline[1000]; //can read a line up to 1000 chars long
+	char* curline; //can read a line up to 1000 chars long
 	index_t* idx = index_new(size);
-	while (fgets(curline, 1000, fp) != NULL){ //get a line
+	while ((curline = freadlinep(fp)) != NULL){ //get a line
 		char delim[] = " ";
 		char* word = strtok(curline, delim); //first strtok takes in curline
 		char* count;
@@ -117,7 +117,9 @@ index_t* index_load(FILE* fp, int size){
 			index_insert(idx, word, atoi(docID));
 			counters_set(hashtable_find(idx, word), atoi(docID), atoi(count));
 		}
+		free(curline);
 	}
+	
 	return idx;
 }
 
