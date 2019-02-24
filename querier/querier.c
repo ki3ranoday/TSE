@@ -42,8 +42,6 @@ int counters_size(counters_t* c);
 void size_helper(void* arg, const int key, int count);
 docscore_t** sortdocs(counters_t* c, int size);
 
-
-
 /*** MAIN ***/
 int main(int argc, char const *argv[]){
 	//check parameters
@@ -60,13 +58,16 @@ int main(int argc, char const *argv[]){
 	}
 	//make a bag that all the counters you create will just be added to and then you can delete them all at once at the end
 	bag_t* cleanupbag = bag_new();
-	//get queries from the user and prints the results
+	//get queries from the user and print the results
 	run(argv[1], idx, cleanupbag);
 	//cleanup the memory
 	bag_delete(cleanupbag, bag_deletehelper);
 	index_delete(idx);
 	return 0;
 }
+/*
+	runs the querier to get input from the user and print it on the screen
+*/
 void run(const char* pagedir, index_t* idx, bag_t* cleanupbag){
 	char* queryString;
 	while((queryString = readlinep()) != NULL){
@@ -76,10 +77,15 @@ void run(const char* pagedir, index_t* idx, bag_t* cleanupbag){
 			printf("%d documents match your query\n", resultsSize);
 			docscore_t** results = sortdocs (result, resultsSize);
 			for(int i = 0; i < resultsSize; i ++){
-				webpage_t* page = loadpage(results[i]->docID, pagedir);
-				printf("DocID:%d\tScore:%d\tURL: %s\n",results[i]->docID,results[i]->score, webpage_getURL(page));
-				webpage_delete(page);
-			}
+				//read in the url from the file
+				char filename[strlen(pagedir) + 8]; //enough memory for pageDirectory a '/' a number up to 6 digits and a '\0'
+				sprintf(filename,"%s/%d",pagedir,results[i]->docID); //make the filename
+				FILE* fp = fopen(filename, "r"); //open the file to read
+				char* url = freadlinep(fp);
+				fclose(fp);
+
+				printf("score\t%4d doc\t%4d : %s\n",results[i]->score,results[i]->docID, url);
+				free(url);			}
 			for(int i = 0; i < resultsSize; i ++)
 				free(results[i]);
 			free(results);
@@ -174,6 +180,7 @@ bool goodQuery(char* queryString){
 */
 counters_t* query(index_t* idx, char* queryString, bag_t* cleanupbag){
 	int numWords = numWordsInQuery(queryString);
+	printf("Querying %s\n", queryString);
 	char** words = parseWords(queryString, numWords);
 	counters_t* product = NULL;
 	counters_t* sum = counters_new();
@@ -201,11 +208,9 @@ counters_t* query(index_t* idx, char* queryString, bag_t* cleanupbag){
 		}
 	}
 	//at the end orMerge the product and the sum
-	if(product != NULL){
-		orMerge(sum,product);
-		product = NULL;
-		//counters_delete(product);
-	}
+	orMerge(sum,product);
+	product = NULL;
+	//counters_delete(product);
 	free(words);
 	return sum;
 }
@@ -244,6 +249,8 @@ int min(int one, int two){
 */
 void andMerge(counters_t* one, counters_t* two){
 	//cpair_t* pair = cpair_new(one,two);
+	if(one == NULL || two == NULL)
+		one = NULL;
 	cpair_t pair = {one, two};
 	counters_iterate(one, &pair, counters_intersector);
 	//cpair_delete(pair);
@@ -432,10 +439,3 @@ docscore_t** sortdocs(counters_t* c, int size){
 	counters_iterate(c, &docs, sort_helper);
 	return ds;
 }
-
-
-
-
-
-
-
