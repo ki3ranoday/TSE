@@ -8,8 +8,18 @@
 #include "readlinep.h"
 #include "word.h"
 #include "bag.h"
+#include "pagedir.h"
+
+/*
+	holds a docID and a score for sorting;
+*/
+typedef struct docscore{
+	int docID;
+	int score;
+} docscore_t;
 
 /*** Function Declarations ***/
+void run(const char* pagedir, index_t* idx, bag_t* cleanupbag);
 int checkArgs(int argc, char const *argv[]);
 bool goodQuery(char* queryString);
 counters_t* query(index_t* idx, char* queryString, bag_t* cleanupbag);
@@ -24,7 +34,15 @@ bool onlyAlpha(char* queryString);
 int numWordsInQuery(char* queryString);
 counters_t* counters_copy(counters_t* c);
 void copyhelper(void* arg, const int key, int count);
-void bag_deletehelper(void* item){ counters_delete(item);}
+void bag_deletehelper(void* item){
+	counters_delete(item);
+}
+void sort_helper(void* arg, const int key, int count);
+int counters_size(counters_t* c);
+void size_helper(void* arg, const int key, int count);
+docscore_t** sortdocs(counters_t* c, int size);
+
+
 
 /*** MAIN ***/
 int main(int argc, char const *argv[]){
@@ -42,24 +60,33 @@ int main(int argc, char const *argv[]){
 	}
 	//make a bag that all the counters you create will just be added to and then you can delete them all at once at the end
 	bag_t* cleanupbag = bag_new();
-	//get queries from the user
-	char* queryString;
-	while((queryString = readlinep()) != NULL){
-		if(goodQuery(queryString)){ //checks the query
-			counters_t* result = query(idx, queryString, cleanupbag); //runs the query prints results kinda
-			counters_print(result, stdout);
-			//counters_delete(result);
-			printf("\n");
-		}
-		free(queryString);
-	}
-	//builds the webpages returned by the query to get their urls
-
-	//prints the query results
+	//get queries from the user and prints the results
+	run(argv[1], idx, cleanupbag);
 	//cleanup the memory
 	bag_delete(cleanupbag, bag_deletehelper);
 	index_delete(idx);
 	return 0;
+}
+void run(const char* pagedir, index_t* idx, bag_t* cleanupbag){
+	char* queryString;
+	while((queryString = readlinep()) != NULL){
+		if(goodQuery(queryString)){ //checks the query
+			counters_t* result = query(idx, queryString, cleanupbag); //runs the query prints results kinda
+			int resultsSize = counters_size(result);
+			printf("%d documents match your query\n", resultsSize);
+			docscore_t** results = sortdocs (result, resultsSize);
+			for(int i = 0; i < resultsSize; i ++){
+				webpage_t* page = loadpage(results[i]->docID, pagedir);
+				printf("DocID:%d\tScore:%d\tURL: %s\n",results[i]->docID,results[i]->score, webpage_getURL(page));
+				webpage_delete(page);
+			}
+			for(int i = 0; i < resultsSize; i ++)
+				free(results[i]);
+			free(results);
+			printf("----------------------------\n");
+		}
+		free(queryString);
+	}
 }
 /*** Function Definitions ***/
 /*
@@ -352,6 +379,60 @@ void copyhelper(void* arg, const int key, int count){
 	counters_add(copy, key);
 	counters_set(copy, key,count);
 }
+
+void size_helper(void* arg, const int key, int count){
+	int* size = arg;
+	if(count > 0)
+		*size = *size + 1;
+}
+/*
+counts the number of documents in a counter with score > 0
+*/
+int counters_size(counters_t* c){
+	int size = 0;
+	counters_iterate(c, &size, size_helper);
+	return size;
+}
+
+typedef struct array{
+	docscore_t** array;
+	int* numinserted;
+}array_t;
+
+/*
+	sorts the array of counters with score > 0
+*/
+void sort_helper(void* arg, const int key, int count){
+	if(count > 0){
+		array_t* a = (array_t*) arg;
+		docscore_t** docs = a->array;
+		docscore_t* ds = malloc(sizeof(docscore_t));
+		ds->docID = key;
+		ds->score = count;
+		int startIndex = *(a->numinserted);
+		docs[startIndex] = ds;
+		//swap with any scores that are lower than the count by iterating backwards down the list
+		for (int i = startIndex-1; i >= 0; i --){
+			if(docs[i]->score < ds->score){
+				docs[i+1] = docs[i];
+				docs[i] = ds;
+			}
+		}
+		*(a->numinserted) = *(a->numinserted)+1;
+	}
+}
+
+/*
+	sorts the counters with size > 0
+*/
+docscore_t** sortdocs(counters_t* c, int size){
+	docscore_t** ds = malloc(size * sizeof(docscore_t*));
+	int numin = 0;
+	array_t docs = {ds, &numin};
+	counters_iterate(c, &docs, sort_helper);
+	return ds;
+}
+
 
 
 

@@ -12,7 +12,7 @@ first line is the page URL
 second line is the page depth
 everything else is the HTML
 */
-void savepage(int ID, webpage_t* page, char* dirname){
+void savepage(int ID, webpage_t* page, const char* dirname){
 	char filename[strlen(dirname)+8]; //make the filename with space for /, end char, and up to 6 digits
 	sprintf(filename, "%s/%d",dirname,ID);
 	FILE* fp = fopen(filename, "w");
@@ -25,7 +25,7 @@ void savepage(int ID, webpage_t* page, char* dirname){
 	fprintf(fp, "%s\n", webpage_getHTML(page));
 	fclose(fp);
 }
-webpage_t* loadpage(int ID, char* dirname){
+webpage_t* loadpage(int ID, const char* dirname){
 	char filename[strlen(dirname) + 8]; //enough memory for pageDirectory a '/' a number up to 6 digits and a '\0'
 	sprintf(filename,"%s/%d",dirname,ID); //make the filename
 	FILE* fp = fopen(filename, "r"); //open the file to read
