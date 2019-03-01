@@ -20,6 +20,6 @@ querier.o:
 
 # clean up after our compilation
 clean:
-	rm querier
-	rm *.o
+	rm -f querier
+	rm -f *.o
 

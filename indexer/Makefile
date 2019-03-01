@@ -21,6 +21,6 @@ indexer.o:
 # clean up after our compilation
 clean:
 	rm -f pages/*
-	rm indexer
-	rm *.o
+	rm -f indexer
+	rm -f *.o
 

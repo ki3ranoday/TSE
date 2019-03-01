@@ -25,5 +25,5 @@ word.o: word.h
 
 # clean up after our compilation
 clean:
-	rm $(LIB)
-	rm *.o
+	rm -f $(LIB)
+	rm -f *.o

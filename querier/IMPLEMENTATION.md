@@ -41,7 +41,9 @@ counter iterate over the second counter and call the helper
 
 ### intersection
 iterate over the first counter and call counters iterate
-the arg must be a counter pair struct
+the arg must be a counter pair struct with both the first and 
+second counters
+
 find the similarities between counters
 only keep a counter if both counters have the document
 	if they do, make the count for that doc the min of
